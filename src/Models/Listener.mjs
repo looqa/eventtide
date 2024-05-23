@@ -11,6 +11,7 @@ import {assignConfig, MD5} from "../Utils.mjs";
  * @property {Bus} bus
  * @property {string} handlerHash
  * @property {Path} path
+ * @property {Function} off - Turns off listener
  */
 
 /**
