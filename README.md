@@ -44,15 +44,15 @@ When `async` is set to `true`, all listeners will be fired without awaiting reso
 Otherwise, when `async` is `false`, every listener's callback will be awaited, then next listeners callback called. It is useful when you need to set priorities for listeners.
 
 ### Suppress
-When `suppress` is set to `true`, exception on listener callback will not stop callback chain from executing, just console warning will be thrown.
-When `suppress` is set to `false`, exception on listener callback will stop executing of callbacks chain.
+When `suppress` is set to `true`, exception on listener handler will not stop executing chain, but throw console warning.
+When `suppress` is set to `false`, exception on listener will stop chain executing.
 ________
 
 ### Listeners
 
 #### Adding a Listener
 
-Add a listener to the bus for a specific event path. You can use an asterisk (`*`) at the end of the path to create a deep listener, which will listen to all events matching the path after the asterisk. You can also pass a configuration object for the listener.
+Add a listener to the bus for a specific event path. You can use an asterisk (`*`) at the end of the path to create a deep listener, which will listen to all events matching the path before the asterisk. You can also pass a configuration object for the listener.
 
 ```javascript
 // Listener for a specific path
@@ -66,7 +66,7 @@ const deepListener = myBus.on('user.*', (payload) => {
 }, {priority: 1});
 ```
 #### Listener priority
-In listener config, you can set `priority` property. If bus is not `async`, it guarantees that listeners for given event will be executed in `priority` order. Less `priority` means earlier execution of listener. By default, all listeners has `priority` set to 1.
+In listener config, you can set `priority` property. If bus is not `async`, it guarantees that listeners for given event will be executed in `priority` order. `priority` is ascending. By default, all listeners has `priority` set to 1.
 
 #### Removing a Listener
 You can unsubscribe listener using `off()` function:
