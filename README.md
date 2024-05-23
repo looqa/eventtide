@@ -66,7 +66,7 @@ const deepListener = myBus.on('user.*', (payload) => {
 }, {priority: 1});
 ```
 #### Listener priority
-In listener config, you can set `priority` property. If bus is not `async`, it guarantees that listeners for given event will be executed in `priority` order. Less `priority` means earlier execution of listener. By default, all listeners hash `priority` set to 1.
+In listener config, you can set `priority` property. If bus is not `async`, it guarantees that listeners for given event will be executed in `priority` order. Less `priority` means earlier execution of listener. By default, all listeners has `priority` set to 1.
 
 #### Removing a Listener
 You can unsubscribe listener using `off()` function:
