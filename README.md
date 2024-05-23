@@ -1,6 +1,6 @@
 
 
-# Event Bus Library
+# Eventtide - Event bus library
 
 An efficient and flexible event bus library for JavaScript, enabling event-driven architecture with ease. This library supports hierarchical event listening, asynchronous event handling, and various configurations to suit your needs.
 
