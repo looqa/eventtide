@@ -29,7 +29,7 @@ If you will try to pass configuration for bus which is already initialized, this
 
 Every bus is global, so you can initialize and then get bus instance in every place of your code by id.
 ```javascript
-import { bus } from '@looqey/eventtide"';
+import { bus } from '@looqey/eventtide';
 
 const myBus = bus('myBus', { debug: true, suppress: false, async: true });
 ```
