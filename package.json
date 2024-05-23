@@ -21,6 +21,7 @@
     "emitter"
   ],
   "author": "Looqey <smirnar@mail.ru>",
+  "homepage": "https://github.com/looqa/eventtide",
   "license": "MIT",
   "files": [
     "build"

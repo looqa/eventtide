@@ -377,11 +377,29 @@ const buses = {};
  */
 
 /**
+ * @typedef {Function} emit
+ * @param {string} path - The event path.
+ * @param {any} [payload=null] - The event payload.
+ * @param {EventConfig} [eventConfig={}] - The configuration for the event.
+ * @returns {Promise<void>} A promise that resolves when the event has been processed.
+ */
+
+/**
+ * Registers an event listener.
+ * @typedef {Function} on
+ * @param {string} path - The event path.
+ * @param {Function} handler - The handler function for the event.
+ * @param {ListenerConfig} [listenConfig={}] - The configuration for the listener.
+ * @returns {Listener} The registered listener.
+ */
+
+
+/**
  * Initializes or retrieves a bus instance.
  *
  * @param {string} [busId='default'] - The ID of the bus.
  * @param {BusConfig} [busConfig={}] - The configuration for the bus.
- * @returns {{emit: (function(string, any=, EventConfig=): Promise<void>), on: (function(string, function, ListenerConfig=): Listener)}} An object with `emit` and `on` methods.
+ * @returns {{emit: emit, on: on}} An object with `emit` and `on` methods.
  */
 const bus = (busId = 'default', busConfig= {}) => {
     if (!buses[busId]) {
@@ -397,12 +415,8 @@ const bus = (busId = 'default', busConfig= {}) => {
 
 
     /**
-     * Registers an event listener.
-     *
-     * @param {string} path - The event path.
-     * @param {Function} handler - The handler function for the event.
-     * @param {ListenerConfig} [listenConfig={}] - The configuration for the listener.
-     * @returns {Listener} The registered listener.
+     * Registers an listener.
+     * @type on
      */
     const on = (path, handler, listenConfig = {}) => {
         const listener = new Listener(handler, path, busInstance, listenConfig);
@@ -411,11 +425,7 @@ const bus = (busId = 'default', busConfig= {}) => {
 
     /**
      * Emits an event.
-     *
-     * @param {string} path - The event path.
-     * @param {any} [payload=null] - The event payload.
-     * @param {EventConfig} [eventConfig={}] - The configuration for the event.
-     * @returns {Promise<void>} A promise that resolves when the event has been processed.
+     * @type emit
      */
     const emit = (path, payload = null, eventConfig = {}) => {
         const event = new Event(path, payload, eventConfig);
