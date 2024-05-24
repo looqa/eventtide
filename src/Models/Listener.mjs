@@ -1,7 +1,7 @@
 
 import {defaultListenerConfig} from "../Configs.mjs";
 import {Path} from "./Path.mjs";
-import {assignConfig, MD5} from "../Utils.mjs";
+import {assignConfig} from "../Utils.mjs";
 
 
 /**
@@ -9,7 +9,6 @@ import {assignConfig, MD5} from "../Utils.mjs";
  * @property {ListenerConfig} config
  * @property {Function} handler
  * @property {Bus} bus
- * @property {string} handlerHash
  * @property {Path} path
  * @property {Function} off - Turns off listener
  */
@@ -23,7 +22,6 @@ export class Listener {
         this.handler = handler
         this.path = new Path(path)
         this.bus = bus
-        this.handlerHash = MD5(handler.toString())
         this.node = null
     }
 
@@ -32,7 +30,9 @@ export class Listener {
     }
 
     off() {
-        this.bus.offListener(this)
+        this.handler = null
+        delete this.path
+        this.bus.removeListener(this)
     }
     setNode(node) {
         this.node = node

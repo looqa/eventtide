@@ -37,26 +37,26 @@ export class Bus {
     /**
      * @param {Listener} listener
      */
-    offListener(listener) {
+    removeListener(listener) {
         let node = listener.getNode()
         if (node) {
             node.off(listener)
-            while (node) {
-                let prevNode = node.getParent()
-                if (!node.getDirectListeners().length && !node.getChilds().length) {
-                    if (index !== -1) {
-                        this.#removeNode(node)
-                    }
-                }
-                node = prevNode
-            }
+            this.#clearNode(node)
         }
     }
 
-    #removeNode(node) {
-        let index = this.nodes.findIndex(it => it === node)
-        if (index !== -1)
-            this.nodes.splice(index, 1)
+    /**
+     *
+     * @param {Node} node
+     */
+    #clearNode(node) {
+        let toRemove = node.cleanupChildren()
+        if (node.isChainEmpty()) {
+            toRemove.push(node)
+        }
+        for (let n of toRemove) {
+                delete this.nodes[n.name]
+        }
     }
 
 
@@ -113,8 +113,8 @@ export class Bus {
         const nodeHashGen = path.iterateHashes()
         let level = 0
         let latestNode = null
-        for (let nextNodeHash of nodeHashGen) {
-            let nextNode = this.#getNode(nextNodeHash) || (this.nodes[nextNodeHash] = new Node(nextNodeHash, level))
+        for (let {hash, path} of nodeHashGen) {
+            let nextNode = this.#getNode(hash) || (this.nodes[hash] = new Node(hash, level, path))
             if (latestNode) nextNode.setParent(latestNode)
             latestNode = nextNode
             level++
@@ -125,8 +125,8 @@ export class Bus {
 
     #iterateNodes = function* (path, desc = false) {
         const nodeHashGen = path.iterateHashes(desc)
-        for (let nextNodeHash of nodeHashGen) {
-            let node = this.#getNode(nextNodeHash)
+        for (let {hash} of nodeHashGen) {
+            let node = this.#getNode(hash)
             if (node) yield node
         }
     }

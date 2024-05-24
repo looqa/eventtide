@@ -55,11 +55,12 @@ export class Path {
         }
     }
 
-    *iterateHashes (desc = false){
+    *iterateHashes(desc = false) {
         for (let i = !desc ? 1 : this.parts.length - 1; !desc ? i <= this.parts.length : i >= 0; !desc ? i++ : i--) {
             const nodePath = this.parts.slice(0, i)
             if (!nodePath.length) return
-            yield MD5(nodePath.join('.'))
+            let nodeString = nodePath.join('.')
+            yield {hash: MD5(nodeString), path: nodeString}
         }
     }
 
