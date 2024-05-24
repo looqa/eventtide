@@ -1,6 +1,6 @@
 import {Node} from "./Node.mjs";
 import {defaultBusConfig} from "../Configs.mjs";
-import {assignConfig, MD5} from "../Utils.mjs";
+import {assignConfig} from "../Utils.mjs";
 
 /**
  * @typedef {object} Bus
@@ -70,12 +70,19 @@ export class Bus {
             return
         }
 
-        if (node) listenersToCall.push(...node.getDirectListeners())
+        if (node) {
+            listenersToCall.push(...node.getDirectListeners())
 
-        let nodeGen = this.#iterateNodes(event.path, true)
-        for (let nextNode of nodeGen) {
-            if (nextNode === node) continue
-            listenersToCall.push(...nextNode.getDeepListeners())
+            node = node.getParent()
+            while (node) {
+                listenersToCall.push(...node.getDeepListeners())
+                node = node.getParent()
+            }
+        } else {
+            let nodeGen = this.#iterateNodes(event.path, true)
+            for (let nextNode of nodeGen) {
+                listenersToCall.push(...nextNode.getDeepListeners())
+            }
         }
 
         listenersToCall.sort((a, b) => a.getPriority() - b.getPriority())
