@@ -80,23 +80,12 @@ class Path {
         }
     }
 
-    /**
-     * Generates unique node hash identifier.
-     *
-     * @param {Number|null} i
-     * @return {string}
-     */
-    getNodeHash(i = null) {
-        if (i === null) i = this.parts.length - 1;
-        const previousPath = this.parts.slice(0, i + 1);
-        return MD5(previousPath.join('.') + String(this.parts[i]) + i)
-    }
-
-    *iterateHashes (desc = false){
+    *iterateHashes(desc = false) {
         for (let i = !desc ? 1 : this.parts.length - 1; !desc ? i <= this.parts.length : i >= 0; !desc ? i++ : i--) {
             const nodePath = this.parts.slice(0, i);
             if (!nodePath.length) return
-            yield MD5(nodePath.join('.'));
+            let nodeString = nodePath.join('.');
+            yield {hash: MD5(nodeString), path: nodeString};
         }
     }
 
@@ -108,7 +97,6 @@ class Path {
  * @property {ListenerConfig} config
  * @property {Function} handler
  * @property {Bus} bus
- * @property {string} handlerHash
  * @property {Path} path
  * @property {Function} off - Turns off listener
  */
@@ -122,7 +110,6 @@ class Listener {
         this.handler = handler;
         this.path = new Path(path);
         this.bus = bus;
-        this.handlerHash = MD5(handler.toString());
         this.node = null;
     }
 
@@ -131,7 +118,9 @@ class Listener {
     }
 
     off() {
-        this.bus.offListener(this);
+        this.handler = null;
+        delete this.path;
+        this.bus.removeListener(this);
     }
     setNode(node) {
         this.node = node;
@@ -158,8 +147,9 @@ class Listener {
  * @type Node
  */
 class Node {
-    constructor(name, level) {
+    constructor(name, level, path) {
         this.name = name;
+        this.path = path;
         this.level = level;
         this.parent = null;
         this.children = [];
@@ -167,7 +157,7 @@ class Node {
     }
 
     setParent(parent) {
-        if (this.parent) return;
+        if (this.parent) return
         this.parent = parent;
         this.parent.setChild(this);
     }
@@ -188,9 +178,10 @@ class Node {
      * @param {Listener} listener
      */
     off(listener) {
-        const index = this.listeners.findIndex(it => it === listener);
+        const index = this.listeners.indexOf(listener);
         if (index !== -1)
             this.listeners.splice(index, 1);
+        listener.setNode(null);
     }
 
     /**
@@ -201,14 +192,44 @@ class Node {
         return Array.from(this.listeners);
     }
 
+    isChainEmpty() {
+        if (this.getDirectListeners().length) return false
+        let nodes = this.getChilds();
+        for (let node of nodes) {
+            if (node.getDirectListeners().length
+                || node.getChilds().length
+                || !node.isChainEmpty()) return false
+        }
+        return true
+    }
+
+    cleanupChildren() {
+        let ret = [];
+        let nodes = this.children;
+        for (let i in nodes) {
+            ret.push(...nodes[i].cleanupChildren());
+            if (!nodes[i].getChilds().length && !nodes[i].getDirectListeners().length) {
+                ret.push(nodes[i]);
+                this.children.splice(i, 1);
+            }
+        }
+        return ret
+    }
+
     /**
      * Gets deep listeners from the current node up to the root.
      * @return {Array<Listener>}
      */
-    getDeepListeners = ()=> this.listeners.filter(it => it.isDeep())
+    getDeepListeners = () => this.listeners.filter(it => it.isDeep())
 
     getParent = () => this.parent
+
+    /**
+     *
+     * @return {Array<Node>}
+     */
     getChilds = () => Array.from(this.children)
+
 }
 
 /**
@@ -246,26 +267,26 @@ class Bus {
     /**
      * @param {Listener} listener
      */
-    offListener(listener) {
+    removeListener(listener) {
         let node = listener.getNode();
         if (node) {
             node.off(listener);
-            while (node) {
-                let prevNode = node.getParent();
-                if (!node.getDirectListeners().length && !node.getChilds().length) {
-                    if (index !== -1) {
-                        this.#removeNode(node);
-                    }
-                }
-                node = prevNode;
-            }
+            this.#clearNode(node);
         }
     }
 
-    #removeNode(node) {
-        let index = this.nodes.findIndex(it => it === node);
-        if (index !== -1)
-            this.nodes.splice(index, 1);
+    /**
+     *
+     * @param {Node} node
+     */
+    #clearNode(node) {
+        let toRemove = node.cleanupChildren();
+        if (node.isChainEmpty()) {
+            toRemove.push(node);
+        }
+        for (let n of toRemove) {
+                delete this.nodes[n.name];
+        }
     }
 
 
@@ -279,12 +300,19 @@ class Bus {
             return
         }
 
-        if (node) listenersToCall.push(...node.getDirectListeners());
+        if (node) {
+            listenersToCall.push(...node.getDirectListeners());
 
-        let nodeGen = this.#iterateNodes(event.path, true);
-        for (let nextNode of nodeGen) {
-            if (nextNode === node) continue
-            listenersToCall.push(...nextNode.getDeepListeners());
+            node = node.getParent();
+            while (node) {
+                listenersToCall.push(...node.getDeepListeners());
+                node = node.getParent();
+            }
+        } else {
+            let nodeGen = this.#iterateNodes(event.path, true);
+            for (let nextNode of nodeGen) {
+                listenersToCall.push(...nextNode.getDeepListeners());
+            }
         }
 
         listenersToCall.sort((a, b) => a.getPriority() - b.getPriority());
@@ -315,10 +343,11 @@ class Bus {
         const nodeHashGen = path.iterateHashes();
         let level = 0;
         let latestNode = null;
-        for (let nextNodeHash of nodeHashGen) {
-            let nextNode = this.#getNode(nextNodeHash) || (this.nodes[nextNodeHash] = new Node(nextNodeHash, level++));
+        for (let {hash, path} of nodeHashGen) {
+            let nextNode = this.#getNode(hash) || (this.nodes[hash] = new Node(hash, level, path));
             if (latestNode) nextNode.setParent(latestNode);
             latestNode = nextNode;
+            level++;
         }
         return latestNode
     }
@@ -326,8 +355,8 @@ class Bus {
 
     #iterateNodes = function* (path, desc = false) {
         const nodeHashGen = path.iterateHashes(desc);
-        for (let nextNodeHash of nodeHashGen) {
-            let node = this.#getNode(nextNodeHash);
+        for (let {hash} of nodeHashGen) {
+            let node = this.#getNode(hash);
             if (node) yield node;
         }
     }
