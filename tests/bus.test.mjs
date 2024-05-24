@@ -79,7 +79,7 @@ describe('Event Bus', () => {
 
         expect(mockFn1).toHaveBeenCalled()
         expect(mockFn2).toHaveBeenCalled()
-        expect(elapsedTime).toBeLessThan(205)
+        expect(elapsedTime).toBeLessThan(105)
     })
 
     test('should run listeners synchronously in sync mode', async () => {
