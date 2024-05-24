@@ -114,9 +114,10 @@ export class Bus {
         let level = 0
         let latestNode = null
         for (let nextNodeHash of nodeHashGen) {
-            let nextNode = this.#getNode(nextNodeHash) || (this.nodes[nextNodeHash] = new Node(nextNodeHash, level++))
+            let nextNode = this.#getNode(nextNodeHash) || (this.nodes[nextNodeHash] = new Node(nextNodeHash, level))
             if (latestNode) nextNode.setParent(latestNode)
             latestNode = nextNode
+            level++
         }
         return latestNode
     }
