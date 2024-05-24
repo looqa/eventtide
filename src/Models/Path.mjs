@@ -55,18 +55,6 @@ export class Path {
         }
     }
 
-    /**
-     * Generates unique node hash identifier.
-     *
-     * @param {Number|null} i
-     * @return {string}
-     */
-    getNodeHash(i = null) {
-        if (i === null) i = this.parts.length - 1
-        const previousPath = this.parts.slice(0, i + 1)
-        return MD5(previousPath.join('.') + String(this.parts[i]) + i)
-    }
-
     *iterateHashes (desc = false){
         for (let i = !desc ? 1 : this.parts.length - 1; !desc ? i <= this.parts.length : i >= 0; !desc ? i++ : i--) {
             const nodePath = this.parts.slice(0, i)
