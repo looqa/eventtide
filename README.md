@@ -18,6 +18,10 @@ Install the library using npm:
 ```bash
 npm install @looqey/eventtide
 ```
+yarn:
+```bash
+yarn add @looqey/eventtide
+```
 ________
 
 ## Usage
@@ -68,6 +72,8 @@ const deepListener = myBus.on('user.*', (payload) => {
 #### Listener priority
 In listener config, you can set `priority` property. If bus is not `async`, it guarantees that listeners for given event will be executed in `priority` order. `priority` is ascending. By default, all listeners has `priority` set to 1.
 
+Keep in mind that deep listeners and exact listeners has no difference by priority (at least by now), so, if you have listener on `*` path with `priority: 1` and listener on exact path with `priority: 2`, the `*` listener will be executed as first.
+
 #### Removing a Listener
 You can unsubscribe listener using `off()` function:
 ```javascript
@@ -83,7 +89,11 @@ Emit an event on the bus. You must use determined paths only; asterisks are not 
 ```javascript
 // This listener will not be executed on next event, because event is set to exact
 myBus.on('user.*', (payload) => {
-    console.log(`User created: ${payload.name}`)
+    console.log(`Something happened to user ${payload.name}`)
+})
+// This listener will be executed
+myBus.on('user.created', (payload) => {
+    console.log(`User ${payload.name} is created`)
 })
 myBus.emit('user.created', { id: 1, name: 'Alice' }, { exact: true });
 ```
