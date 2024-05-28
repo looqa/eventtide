@@ -10,11 +10,11 @@
  */
 /**
  * @type Path
- */class r{constructor(t,e=!1){this.original=t;const s=t.split(".");this.#t(s,e),s.length&&"*"===s[s.length-1]?(this.deep=!0,s.pop()):this.deep=!1,""!==this.original&&s.unshift(""),this.parts=s}
+ */class r{constructor(path,t=!1){this.original=path;const e=path.split(".");this.#t(e,t),e.length&&"*"===e[e.length-1]?(this.deep=!0,e.pop()):this.deep=!1,""!==this.original&&e.unshift(""),this.parts=e}
 /**
      * @param {Array<string>} path
      * @param {boolean} exact
-     */#t(t,e){let s=[],i=null;if(t.forEach(((n,r)=>{"*"===n&&(e?s.push("Asterisk is not allowed when emitting event"):(null!==i&&s.push("Multiple asterisks found, only one expected"),i=r,i<t.length-1&&s.push("Asterisk allowed only at the end of the path")))})),s.length)throw new Error(`Path ${this.original}, found violations: `+s.toString())}*iterateHashes(t=!1){for(let e=t?this.parts.length-1:1;t?e>=0:e<=this.parts.length;t?e--:e++){const t=this.parts.slice(0,e);if(!t.length)return;let s=t.join(".");yield{hash:i(s),path:s}}}getTailHash=()=>i(this.parts.join("."))
+     */#t(path,t){let e=[],s=null;if(path.forEach(((i,n)=>{"*"===i&&(t?e.push("Asterisk is not allowed when emitting event"):(null!==s&&e.push("Multiple asterisks found, only one expected"),s=n,s<path.length-1&&e.push("Asterisk allowed only at the end of the path")))})),e.length)throw new Error(`Path ${this.original}, found violations: `+e.toString())}*iterateHashes(t=!1){for(let e=t?this.parts.length-1:1;t?e>=0:e<=this.parts.length;t?e--:e++){const t=this.parts.slice(0,e);if(!t.length)return;let s=t.join(".");yield{hash:i(s),path:s}}}getTailHash=()=>i(this.parts.join("."))
 /**
  * @typedef {Object} Listener
  * @property {ListenerConfig} config
@@ -25,7 +25,7 @@
  */
 /**
  * @type Listener
- */}class h{constructor(e,s,i,h={}){this.config=n(h,t),this.handler=e,this.path=new r(s),this.bus=i,this.node=null}async call(t=null){await this.handler(t)}off(){this.handler=null,delete this.path,this.bus.removeListener(this)}setNode(t){this.node=t}getNode=()=>this.node;getPath=()=>this.path;isDeep=()=>this.path.deep;getPriority=()=>this.config.priority??0
+ */}class h{constructor(handler,path,e,s={}){this.config=n(s,t),this.handler=handler,this.path=new r(path),this.bus=e,this.node=null}async call(payload=null){await this.handler(payload)}off(){this.handler=null,delete this.path,this.bus.removeListener(this)}setNode(t){this.node=t}getNode=()=>this.node;getPath=()=>this.path;isDeep=()=>this.path.deep;getPriority=()=>this.config.priority??0
 /**
  * @typedef Node
  * @property {string} name
@@ -36,7 +36,7 @@
  */
 /**
  * @type Node
- */}class l{constructor(t,e,s){this.name=t,this.path=s,this.level=e,this.parent=null,this.children=[],this.listeners=[]}setParent(t){this.parent||(this.parent=t,this.parent.setChild(this))}setChild(t){this.children.push(t)}addListener(t){this.listeners.push(t),t.setNode(this)}
+ */}class l{constructor(t,e,path){this.name=t,this.path=path,this.level=e,this.parent=null,this.children=[],this.listeners=[]}setParent(t){this.parent||(this.parent=t,this.parent.setChild(this))}setChild(t){this.children.push(t)}addListener(t){this.listeners.push(t),t.setNode(this)}
 /**
      *
      * @param {Listener} listener
@@ -81,7 +81,7 @@ constructor(t,e={}){this.config=n(e,s),this.id=t,this.nodes={}}
 /**
      * @param {Path} path
      * @return {Node}
-     */#e=t=>{const e=t.iterateHashes();let s=0,i=null;for(let{hash:t,path:n}of e){let e=this.#r(t)||(this.nodes[t]=new l(t,s,n));i&&e.setParent(i),i=e,s++}return i};#i=t=>this.#r(t.getTailHash())??null;#n=function*(t,e=!1){const s=t.iterateHashes(e);for(let{hash:t}of s){let e=this.#r(t);e&&(yield e)}};#r=t=>this.nodes[t];isSuppressing=()=>this.config.suppress;isDebug=()=>this.config.debug;isAsync=()=>this.config.async
+     */#e=path=>{const t=path.iterateHashes();let e=0,s=null;for(let{hash:i,path:path}of t){let t=this.#r(i)||(this.nodes[i]=new l(i,e,path));s&&t.setParent(s),s=t,e++}return s};#i=path=>this.#r(path.getTailHash())??null;#n=function*(path,t=!1){const e=path.iterateHashes(t);for(let{hash:t}of e){let e=this.#r(t);e&&(yield e)}};#r=t=>this.nodes[t];isSuppressing=()=>this.config.suppress;isDebug=()=>this.config.debug;isAsync=()=>this.config.async
 /**
  * @typedef Event
  * @property {string} path
@@ -89,7 +89,7 @@ constructor(t,e={}){this.config=n(e,s),this.id=t,this.nodes={}}
  */
 /**
  * @type Event
- */}class a{constructor(t,s=null,i={}){this.config=n(i,e),this.path=new r(t,!0),this.payload=s}isExact=()=>this.config.exact}const c={};
+ */}class a{constructor(path,payload=null,t={}){this.config=n(t,e),this.path=new r(path,!0),this.payload=payload}isExact=()=>this.config.exact}const c={};
 /**
  * @typedef {Object} BusConfig
  * @property {boolean} debug
@@ -109,10 +109,10 @@ constructor(t,e={}){this.config=n(e,s),this.id=t,this.nodes={}}
  *
  * @param {string} [busId='default'] - The ID of the bus.
  * @param {BusConfig} [busConfig={}] - The configuration for the bus.
- */exports.bus=(t="default",e={})=>{c[t]?Object.keys(e).length&&console.warn(`Bus ${t} was already defined, but there is another call with config. This config was not applied`)
+ */exports.bus=(busId="default",busConfig={})=>{c[busId]?Object.keys(busConfig).length&&console.warn(`Bus ${busId} was already defined, but there is another call with config. This config was not applied`)
 /**
      * @type Bus
-     */:c[t]=new o(t,e);const s=c[t];
+     */:c[busId]=new o(busId,busConfig);const t=c[busId];
 /**
      * Registers an event listener.
      * @method on
@@ -120,4 +120,4 @@ constructor(t,e={}){this.config=n(e,s),this.id=t,this.nodes={}}
      * @param {Function} handler - The handler function for the event.
      * @param {ListenerConfig} [listenConfig={}] - The configuration for the listener.
      * @returns {Listener} The registered listener.
-     */return{on:(t,e,i={})=>{const n=new h(e,t,s,i);return s.addListener(n)},emit:(t,e=null,i={})=>{const n=new a(t,e,i);return s.call(n)}}};
+     */return{on:(path,handler,listenConfig={})=>{const e=new h(handler,path,t,listenConfig);return t.addListener(e)},emit:(path,payload=null,eventConfig={})=>{const e=new a(path,payload,eventConfig);return t.call(e)}}};
