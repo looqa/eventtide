@@ -1,6 +1,6 @@
 {
   "name": "@looqey/eventtide",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "An event bus implementation with listeners hierarchy, priority and exception suppressing.",
   "main": "./build/index.cjs.js",
   "module": "./build/index.esm.mjs",
