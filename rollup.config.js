@@ -11,6 +11,10 @@ export default {
                     format: {
                         comments: "all"
                     },
+                    mangle: {
+                        toplevel: true,
+                        reserved: ['busConfig', 'busId', 'path', 'payload', 'eventConfig', 'handler', 'listenConfig']
+                    }
                 })],
             entryFileNames: 'index.cjs.js'
         },
@@ -21,6 +25,10 @@ export default {
                 terser({
                     format: {
                         comments: "all"
+                    },
+                    mangle: {
+                        toplevel: true,
+                        reserved: ['busConfig', 'busId', 'path', 'payload', 'eventConfig', 'handler', 'listenConfig']
                     }
                 })],
             entryFileNames: 'index.esm.mjs'
