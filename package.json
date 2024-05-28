@@ -12,17 +12,40 @@
   },
   "scripts": {
     "build": "rollup --config",
-    "test": "jest"
+    "test": "jest",
+    "pest": "node tests/t.mjs"
   },
   "keywords": [
     "events",
+    "event",
     "eventbus",
+    "bus",
     "pubsub",
-    "emitter"
+    "emitter",
+    "listener",
+    "subscribe",
+    "dispatcher",
+    "eventDispatcher",
+    "pub/sub",
+    "publish"
   ],
   "author": "Looqey <smirnar@mail.ru>",
   "homepage": "https://github.com/looqa/eventtide",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/looqa/eventtide.git"
+  },
+  "bugs": {
+    "url": "https://github.com/looqa/eventtide/issues"
+  },
+  "contributors": [
+    {
+      "name": "Looqey",
+      "email": "smirnar@mail.ru",
+      "url": "https://github.com/looqa"
+    }
+  ],
   "files": [
     "build"
   ],
