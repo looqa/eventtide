@@ -1,4 +1,4 @@
-import {MD5} from "../Utils.mjs";
+import {DJB2} from "../Utils.mjs";
 
 
 /**
@@ -60,10 +60,10 @@ export class Path {
             const nodePath = this.parts.slice(0, i)
             if (!nodePath.length) return
             let nodeString = nodePath.join('.')
-            yield {hash: MD5(nodeString), path: nodeString}
+            yield {hash: DJB2(nodeString), path: nodeString}
         }
     }
 
-    getTailHash = () => MD5(this.parts.join('.'))
+    getTailHash = () => DJB2(this.parts.join('.'))
 }
 
