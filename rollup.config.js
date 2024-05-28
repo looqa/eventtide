@@ -11,9 +11,11 @@ export default {
                     format: {
                         comments: "all"
                     },
-                    mangle: {
-                        toplevel: true,
-                        reserved: ['busConfig', 'busId', 'path', 'payload', 'eventConfig', 'handler', 'listenConfig']
+                    mangle: false,
+                    compress: {
+                        defaults: false,
+                        unused: true,
+                        dead_code: true
                     }
                 })],
             entryFileNames: 'index.cjs.js'
@@ -26,9 +28,11 @@ export default {
                     format: {
                         comments: "all"
                     },
-                    mangle: {
-                        toplevel: true,
-                        reserved: ['busConfig', 'busId', 'path', 'payload', 'eventConfig', 'handler', 'listenConfig']
+                    mangle: false,
+                    compress: {
+                        defaults: false,
+                        unused: true,
+                        dead_code: true
                     }
                 })],
             entryFileNames: 'index.esm.mjs'
