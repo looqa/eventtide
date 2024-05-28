@@ -12,8 +12,7 @@
   },
   "scripts": {
     "build": "rollup --config",
-    "test": "jest",
-    "pest": "node tests/t.mjs"
+    "test": "jest"
   },
   "keywords": [
     "events",
