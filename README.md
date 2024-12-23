@@ -1,161 +1,245 @@
+# Eventtide: Type safe, SSR-friendly event bus
 
+A robust, type-safe event bus library for TypeScript, enabling seamless event-driven communication within your applications. Designed with developer experience in mind, this library leverages TypeScript’s powerful type system to ensure type safety, IntelliSense support, and an intuitive chain-based API.
 
-# Eventtide - Event bus library
+## 📦 Features
 
-An efficient and flexible event bus library for JavaScript, enabling event-driven architecture with ease. This library supports hierarchical event listening, asynchronous event handling, and various configurations to suit your needs.
+- **Type-Safe Event Definitions**: Define any event with custom payloads, ensuring compile-time type safety.
+- **Chain-Based API**: Fluent and intuitive syntax for subscribing and emitting events.
+- **Subscription Management**: Easily unsubscribe or manually trigger listeners.
+- **Error Handling Options**: Configure the bus to suppress or handle listener errors gracefully.
+- **Dependency Injection Friendly**: No any global objects. You will rule the initializing and storing bus instances.
+- **Minimal Runtime Overhead**: Efficient listener management without unnecessary runtime objects.
 
-## Features
+## 🚀 Installation
 
-- **Asynchronous Event Handling**: Handle events asynchronously with promise support.
-- **Configurable Priorities**: Set priorities for listeners to control the order of execution.
-- **Path Matching**: Support for exact and wildcard path matching.
-- **Debugging and Error Suppression**: Configurable debugging and error suppression options.
-
-## Installation
-
-Install the library using npm:
+Install the library via npm or yarn:
 
 ```bash
 npm install @looqey/eventtide
+# or
+yarn @looqey/eventtide
 ```
-yarn:
-```bash
-yarn add @looqey/eventtide
+
+## 🔧 Usage
+
+### 1. Define Your Event Schema
+
+Start by defining a TypeScript type that outlines your event names and their corresponding payloads.
+
+```ts
+// mySchema.ts
+
+export type MyBusSchema = {
+  userCreated: { userId: string; name: string };
+  orderPlaced: { orderId: string; amount: number };
+  paymentProcessed: number; // Example of a simple payload type
+};
 ```
-________
 
-## Usage
+### 2. Create an Event Bus Instance
 
-### Creating a Bus
+Instantiate the event bus with your defined schema. Optionally, configure error handling behavior.
 
-You can create a new bus or retrieve an existing one using the `bus` function. Optionally, you can pass a configuration object.
-If you will try to pass configuration for bus which is already initialized, this config will not be applied.
+```ts
+// main.ts
 
-Every bus is global, so you can initialize and then get bus instance in every place of your code by id.
-```javascript
-import { bus } from '@looqey/eventtide';
+import { createBus } from 'typesafe-event-bus';
+import { MyBusSchema } from './mySchema';
 
-const myBus = bus('myBus', { debug: true, suppress: false, async: true });
+const bus = createBus<MyBusSchema>({ suppress: true }); // Suppress listener errors
 ```
-Please refer to [API section](#api) to get more info about config.
 
-### Asynchrony
-To avoid misunderstanding about `async` parameter, let's define what does it mean:
-asyncrony of bus affects only method of executing listeners for event, not matters, if listeners callbacks is sync nor async.
+### 3. Subscribe to Events
 
-When `async` is set to `true`, all listeners will be fired without awaiting resolving of previous listener.
+Use the chain-based API to subscribe to events. Subscriptions return an object allowing you to unsubscribe or manually trigger the listener.
 
-Otherwise, when `async` is `false`, every listener's callback will be awaited, then next listeners callback called. It is useful when you need to set priorities for listeners.
+```ts
+// subscribing.ts
 
-### Suppress
-When `suppress` is set to `true`, exception on listener handler will not stop executing chain, but throw console warning.
-When `suppress` is set to `false`, exception on listener will stop chain executing.
-________
+const userCreatedSubscription = bus.on().userCreated((payload) => {
+  console.log(`User created: ${payload.userId}, Name: ${payload.name}`);
+});
 
-### Listeners
-
-#### Adding a Listener
-
-Add a listener to the bus for a specific event path. You can use an asterisk (`*`) at the end of the path to create a deep listener, which will listen to all events matching the path before the asterisk. You can also pass a configuration object for the listener.
-
-```javascript
-// Listener for a specific path
-const listener = myBus.on('user.created', async (payload) => {
-    console.log('User created:', payload);
-}, {priority: 2});
-
-// Deep listener for all user-related events
-const deepListener = myBus.on('user.*', (payload) => {
-    console.log('User event:', payload);
-}, {priority: 1});
+const orderPlacedSubscription = bus.on().orderPlaced((payload) => {
+  console.log(`Order placed: ${payload.orderId}, Amount: $${payload.amount}`);
+});
 ```
-#### Listener priority
-In listener config, you can set `priority` property. If bus is not `async`, it guarantees that listeners for given event will be executed in `priority` order. `priority` is ascending. By default, all listeners has `priority` set to 1.
 
-Keep in mind that deep listeners and exact listeners has no difference by priority (at least by now), so, if you have listener on `*` path with `priority: 1` and listener on exact path with `priority: 2`, the `*` listener will be executed as first.
+### 4. Emit Events
 
-#### Removing a Listener
-You can unsubscribe listener using `off()` function:
-```javascript
-listener.off();
+Emit events using the chain-based API. TypeScript ensures that the payload matches the defined schema.
+
+```ts
+// emitting.ts
+
+// Emit userCreated event
+bus.emit().userCreated({ userId: 'u123', name: 'Alice' });
+
+// Emit orderPlaced event
+bus.emit().orderPlaced({ orderId: 'o456', amount: 250 });
+
+// Emit paymentProcessed event
+bus.emit().paymentProcessed(1000);
 ```
-_________
-### Events
 
-#### Emitting an Event
+### 5. Manage Subscriptions
 
-Emit an event on the bus. You must use determined paths only; asterisks are not allowed in event path. You can pass a payload and an optional configuration object for the event.
+Unsubscribe from events or manually trigger listeners as needed.
 
-```javascript
-// This listener will not be executed on next event, because event is set to exact
-myBus.on('user.*', (payload) => {
-    console.log(`Something happened to user ${payload.name}`)
-})
-// This listener will be executed
-myBus.on('user.created', (payload) => {
-    console.log(`User ${payload.name} is created`)
-})
-myBus.emit('user.created', { id: 1, name: 'Alice' }, { exact: true });
+```ts
+// managingSubscriptions.ts
+
+// Unsubscribe from userCreated event
+userCreatedSubscription.off();
+
+// Manually trigger orderPlaced listener
+orderPlacedSubscription.fire({ orderId: 'o789', amount: 300 });
 ```
-#### Exact events
-Set `exact: true` in event config to exclude all deep listeners, which may be fired on this path.
 
-________
 
-### API
+## 📚 API Reference
 
-#### `bus(busId = 'default', busConfig = {})`
+### `createBus<Schema>(options?: BusOptions): EventBus<Schema>`
 
-Initializes or retrieves a bus instance.
+Creates a new event bus instance with the specified schema and options.
+
+- **Generics:**
+  - `Schema`: Defines the structure of events and their payloads.
 
 - **Parameters:**
-    - `busId` (string): The ID of the bus. Default: `default`.
-    - `busConfig` (object): [BusConfig](#BusConfig)
+  - `options` *(optional)*: Configuration options for the event bus.
+    - `suppress?: boolean`: If `true`, errors thrown by listeners during event emission are logged to the console instead of being thrown, preventing the interruption of subsequent listeners. Default is `false`.
 
-- **Returns:** An object with `emit` and `on` methods.
+- **Returns:**
+  - `EventBus<Schema>`: The event bus instance.
 
-#### `busInstance.on(path, handler, config = {})`
+### `EventBus<Schema>`
 
-Adds a listener for the specified path.
+Interface defining the structure and methods of the event bus.
 
-- **Parameters:**
-    - `path` (string): The event path. Use an asterisk (`*`) at the end for deep listeners.
-    - `handler` (function): The function to call when the event is emitted.
-    - `config` (object): [ListenerConfig](#ListenerConfig).
+#### Methods:
 
-- **Returns:** A listener object with an `off` method.
+- **`on(): OnBuilder<Schema>`**
 
-#### `busInstance.emit(path, payload = null, config = {})`
+  Subscribes to events using a chain-based approach.
 
-Emits an event on the specified path.
+  - **Usage:**
+    ```ts
+    bus.on().eventName(callback);
+    ```
 
-- **Parameters:**
-    - `path` (string): The event path. Asterisks are not allowed.
-    - `payload` (any): The payload to pass to the listeners.
-    - `config` (object): [EventConfig](#EventConfig)
+  - **Returns:**
+    - An object where each key corresponds to an event name defined in `Schema`, and each value is a function to register a listener for that event. The listener registration function returns a `Subscription` object.
 
-- **Returns:** A promise that resolves when all listeners have been called.
+- **`emit(): EmitBuilder<Schema>`**
 
-#### `listener.off()`
+  Emits events using a chain-based approach.
 
-Removes the listener from the bus.
+  - **Usage:**
+    ```ts
+    bus.emit().eventName(payload);
+    ```
 
-## Configuration Objects
+  - **Returns:**
+    - An object where each key corresponds to an event name defined in `Schema`, and each value is a function to emit the event with the specified payload.
 
-### BusConfig
+### `Subscription<Payload>`
 
-- `debug` (boolean): Enable or disable debugging. Default `false`
-- `suppress` (boolean): Suppress or propagate errors. Default `true`
-- `async` (boolean): Handle events asynchronously. Default `false`
+Represents a subscription to an event, providing methods to manage the listener.
 
-### ListenerConfig
+- **Methods:**
+  - **`off(): void`**
+    - Unsubscribes the listener from the event.
+  - **`fire(payload: Payload): void`**
+    - Manually triggers the listener with the provided payload.
 
-- `priority` (number): Priority of the listener (lower number means higher priority). Default `1`
+### `BusOptions`
 
-### EventConfig
+Configuration options for creating the event bus.
 
-- `exact` (boolean): Whether to match the path exactly. Default `false`
+- **Properties:**
+  - **`suppress?: boolean`**
+    - If `true`, suppresses exceptions thrown by listeners during event emission, logging them to the console instead.
 
-## License
+## 🛠️ Error Handling
 
-This project is licensed under the MIT License.
+By default, if a listener throws an error during event emission, the error propagates, potentially interrupting the execution of subsequent listeners. To change this behavior, enable the `suppress` option when creating the bus:
+
+```ts
+const bus = createBus<MyBusSchema>({ suppress: true });
+```
+
+With `suppress` enabled, errors thrown by listeners are caught and logged to the console, allowing other listeners to continue executing.
+
+## 🔒 Type Safety
+
+This library leverages TypeScript’s generics and mapped types to ensure:
+
+- **Event Names**: Only defined event names in the schema can be subscribed to or emitted.
+- **Payloads**: Payloads must match the type specified for each event.
+- **IntelliSense Support**: Full auto-completion for event names and payloads in supported IDEs.
+
+### Example of Type Safety in Action
+
+```ts
+// Correct usage
+bus.emit().orderPlaced({ orderId: 'o123', amount: 250 });
+
+// TypeScript Error: Argument of type 'string' is not assignable to parameter of type 'number'.
+bus.emit().paymentProcessed('not-a-number');
+```
+
+
+## 🧩 Integration
+
+This library is framework-agnostic. Nevertheless, there is at least one catchy moment.
+
+> **Important Note:**  
+> Event bus instances cannot be serialized. If you are using server-side rendering (SSR) frameworks like Nuxt, ensure that event bus instances are only created and used in appropriate contexts. To avoid SSR-related issues, you can use a mock event bus during server-side execution and switch to the real event bus on the client side.
+
+
+
+### Using a Mock Bus for SSR
+
+For SSR scenarios, we recommend using the `createMockBus` utility to initialize a no-op event bus instance. This avoids issues with serialization and ensures smooth server-client handoff.
+
+#### Example Integration in Nuxt
+
+```ts
+// plugins/buses.ts
+
+import { createBus } from 'typesafe-event-bus';
+import { createMockBus } from 'typesafe-event-bus/mockBus';
+import { MyBusSchema } from '@/mySchema';
+
+export default defineNuxtPlugin((nuxtApp) => {
+  // Use the mock bus during SSR
+  const isSSR = import.meta.server;
+  const bus = isSSR ? createMockBus<MyBusSchema>() : createBus<MyBusSchema>({ suppress: true });
+
+  nuxtApp.provide('bus', bus);
+});
+```
+
+
+---
+
+### **Key Benefits of Using the Mock Bus**
+
+1. **SSR Safety**: Avoids issues with serialization and hydration by ensuring no listeners or events are retained on the server.
+2. **Uniform API**: Maintains the same API as the real event bus, so no additional changes are required in your client-side or shared logic.
+3. **Testing**: Useful for environments where you don’t need the real bus, such as tests focused on unrelated logic.
+
+
+## 👩‍💻 Contributing
+
+Contributions are welcome! Please open issues or submit pull requests for any enhancements, bug fixes, or new features.
+
+## 📜 License
+
+This library is licensed under the MIT license.
+
+## 🙏 Acknowledgements
+
+Inspired by common patterns in event-driven architectures and modern TypeScript practices to ensure type safety and developer productivity.

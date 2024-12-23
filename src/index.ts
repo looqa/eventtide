@@ -126,3 +126,31 @@ export function createBus<Schema>(options?: BusOptions): EventBus<Schema> {
         },
     };
 }
+
+
+export function createMockBus<Schema>(): EventBus<Schema> {
+    const noOp = () => {
+    };
+
+    const noOpSubscription: Subscription<any> = {
+        off: noOp,
+        fire: noOp,
+    };
+
+    return {
+        on() {
+            return new Proxy({} as Record<keyof Schema, any>, {
+                get() {
+                    return () => noOpSubscription;
+                },
+            });
+        },
+        emit() {
+            return new Proxy({} as Record<keyof Schema, any>, {
+                get() {
+                    return noOp;
+                },
+            });
+        },
+    };
+}

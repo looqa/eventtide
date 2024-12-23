@@ -1,6 +1,6 @@
 // tests/index.test.ts
 import { describe, it, expect, jest } from '@jest/globals';
-import { createBus, Subscription } from '../src';
+import {createBus, createMockBus, Subscription} from '../src';
 
 // Define a simple schema for testing:
 type TestSchema = {
@@ -144,5 +144,84 @@ describe('createBus()', () => {
         expect(mockFn1).toHaveBeenCalledTimes(1); // No new call
         expect(mockFn2).toHaveBeenCalledTimes(2);
         expect(mockFn2).toHaveBeenCalledWith({ userId: 'user2' });
+    });
+});
+
+describe('createMockBus()', () => {
+    it('does not call any listeners when emitting events', () => {
+        const mockBus = createMockBus<TestSchema>();
+        const mockFn = jest.fn();
+
+        const subscription = mockBus.on().someEvent(mockFn);
+
+        mockBus.emit().someEvent({ userId: 'abc' });
+
+        expect(mockFn).not.toHaveBeenCalled();
+    });
+
+    it('allows unsubscribing without errors', () => {
+        const mockBus = createMockBus<TestSchema>();
+        const mockFn = jest.fn();
+
+        const subscription = mockBus.on().anotherEvent(mockFn);
+
+        subscription.off();
+
+        mockBus.emit().anotherEvent(42);
+
+        expect(mockFn).not.toHaveBeenCalled();
+    });
+
+    it('allows manually firing a listener via subscription but does nothing', () => {
+        const mockBus = createMockBus<TestSchema>();
+        const mockFn = jest.fn();
+
+        const subscription = mockBus.on().someEvent(mockFn);
+
+        subscription.fire({ userId: 'abc' });
+
+        expect(mockFn).not.toHaveBeenCalled();
+    });
+
+    it('does not throw errors when emitting events with multiple listeners', () => {
+        const mockBus = createMockBus<TestSchema>();
+        const mockFn1 = jest.fn();
+        const mockFn2 = jest.fn();
+
+        mockBus.on().someEvent(mockFn1);
+        mockBus.on().someEvent(mockFn2);
+
+        expect(() => {
+            mockBus.emit().someEvent({ userId: 'xyz' });
+        }).not.toThrow();
+
+        expect(mockFn1).not.toHaveBeenCalled();
+        expect(mockFn2).not.toHaveBeenCalled();
+    });
+
+    it('does not throw errors when unsubscribing multiple times', () => {
+        const mockBus = createMockBus<TestSchema>();
+        const mockFn = jest.fn();
+
+        const subscription = mockBus.on().someEvent(mockFn);
+
+        expect(() => {
+            subscription.off();
+            subscription.off();
+        }).not.toThrow();
+    });
+
+    it('provides a valid API matching the real bus', () => {
+        const mockBus = createMockBus<TestSchema>();
+
+        expect(typeof mockBus.on).toBe('function');
+
+        expect(typeof mockBus.emit).toBe('function');
+
+        const onProxy = mockBus.on();
+        expect(typeof onProxy.someEvent).toBe('function');
+
+        const emitProxy = mockBus.emit();
+        expect(typeof emitProxy.someEvent).toBe('function');
     });
 });
