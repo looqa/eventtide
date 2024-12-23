@@ -1,14 +1,14 @@
 {
   "name": "@looqey/eventtide",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "An event bus implementation with listeners hierarchy, priority and exception suppressing.",
   "main": "./build/index.cjs.js",
-  "module": "./build/index.esm.mjs",
+  "module": "./build/index.esm.js",
+  "types": "./build/index.d.ts",
   "exports": {
-    "module": "./build/index.esm.mjs",
-    "import": "./build/index.esm.mjs",
+    "import": "./build/index.esm.js",
     "require": "./build/index.cjs.js",
-    "default": "./build/index.esm.mjs"
+    "default": "./build/index.esm.js"
   },
   "scripts": {
     "build": "rollup --config",
@@ -52,9 +52,15 @@
   "devDependencies": {
     "@babel/preset-env": "^7.24.5",
     "@rollup/plugin-terser": "^0.4.4",
-    "babel-jest": "^29.7.0",
+    "@rollup/plugin-typescript": "^10.0.1",
+    "@types/jest": "^29.5.14",
     "jest": "^29.7.0",
-    "jest-cli": "^29.7.0",
-    "rollup": "^4.17.2"
+    "rollup": "^3.29.5",
+    "rollup-plugin-dts": "^5.0.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "ts-jest": "^29.2.5"
   }
 }
