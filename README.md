@@ -44,7 +44,7 @@ Instantiate the event bus with your defined schema. Optionally, configure error 
 ```ts
 // main.ts
 
-import { createBus } from 'typesafe-event-bus';
+import { createBus } from '@looqey/eventtide';
 import { MyBusSchema } from './mySchema';
 
 const bus = createBus<MyBusSchema>({ suppress: true }); // Suppress listener errors
@@ -209,8 +209,7 @@ For SSR scenarios, we recommend using the `createMockBus` utility to initialize 
 ```ts
 // plugins/buses.ts
 
-import { createBus } from 'typesafe-event-bus';
-import { createMockBus } from 'typesafe-event-bus/mockBus';
+import { createBus, createMockBus } from '@looqey/eventtide';
 import { MyBusSchema } from '@/mySchema';
 
 export default defineNuxtPlugin((nuxtApp) => {
