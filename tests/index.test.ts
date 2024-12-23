@@ -1,11 +1,12 @@
 // tests/index.test.ts
 import { describe, it, expect, jest } from '@jest/globals';
-import { createBus } from '../src';
+import { createBus, Subscription } from '../src';
 
 // Define a simple schema for testing:
 type TestSchema = {
     someEvent: { userId: string };
     anotherEvent: number;
+    errorEvent: string;
 };
 
 describe('createBus()', () => {
@@ -53,5 +54,95 @@ describe('createBus()', () => {
         bus.emit().anotherEvent(123);
         expect(fnAnotherEvent).toHaveBeenCalledWith(123);
         expect(fnSomeEvent).toHaveBeenCalledTimes(1); // no new calls
+    });
+
+    it('allows unsubscribing from an event', () => {
+        const bus = createBus<TestSchema>();
+        const mockFn = jest.fn();
+
+        const subscription = bus.on().someEvent(mockFn);
+        bus.emit().someEvent({ userId: 'abc' });
+
+        expect(mockFn).toHaveBeenCalledTimes(1);
+
+        // Unsubscribe
+        subscription.off();
+        bus.emit().someEvent({ userId: 'def' });
+
+        expect(mockFn).toHaveBeenCalledTimes(1); // No new calls
+    });
+
+    it('allows manually firing a listener via subscription', () => {
+        const bus = createBus<TestSchema>();
+        const mockFn = jest.fn();
+
+        const subscription = bus.on().anotherEvent(mockFn);
+
+        // Manually fire the listener
+        subscription.fire(99);
+
+        expect(mockFn).toHaveBeenCalledWith(99);
+
+        // Also ensure that emit works as usual
+        bus.emit().anotherEvent(100);
+        expect(mockFn).toHaveBeenCalledWith(100);
+        expect(mockFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('handles errors in listeners based on suppress option', () => {
+        // Without suppress
+        const bus1 = createBus<TestSchema>();
+        const errorFn1 = jest.fn(() => {
+            throw new Error('Listener error');
+        });
+        const normalFn1 = jest.fn();
+
+        bus1.on().errorEvent(errorFn1);
+        bus1.on().errorEvent(normalFn1);
+
+        expect(() => {
+            bus1.emit().errorEvent('test');
+        }).toThrow('Listener error');
+
+        expect(normalFn1).not.toHaveBeenCalled(); // Emission stops at the first error
+
+        // With suppress
+        const bus2 = createBus<TestSchema>({ suppress: true });
+        const errorFn2 = jest.fn(() => {
+            throw new Error('Listener error');
+        });
+        const normalFn2 = jest.fn();
+
+        bus2.on().errorEvent(errorFn2);
+        bus2.on().errorEvent(normalFn2);
+
+        expect(() => {
+            bus2.emit().errorEvent('test suppressed');
+        }).not.toThrow();
+
+        expect(errorFn2).toHaveBeenCalledWith('test suppressed');
+        expect(normalFn2).toHaveBeenCalledWith('test suppressed');
+    });
+
+    it('allows multiple subscriptions and independent unsubscriptions', () => {
+        const bus = createBus<TestSchema>();
+        const mockFn1 = jest.fn();
+        const mockFn2 = jest.fn();
+
+        const subscription1 = bus.on().someEvent(mockFn1);
+        const subscription2 = bus.on().someEvent(mockFn2);
+
+        bus.emit().someEvent({ userId: 'user1' });
+
+        expect(mockFn1).toHaveBeenCalledWith({ userId: 'user1' });
+        expect(mockFn2).toHaveBeenCalledWith({ userId: 'user1' });
+
+        // Unsubscribe the first listener
+        subscription1.off();
+        bus.emit().someEvent({ userId: 'user2' });
+
+        expect(mockFn1).toHaveBeenCalledTimes(1); // No new call
+        expect(mockFn2).toHaveBeenCalledTimes(2);
+        expect(mockFn2).toHaveBeenCalledWith({ userId: 'user2' });
     });
 });
